@@ -4,6 +4,8 @@
  */
 
 import java.util.StringTokenizer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -1063,6 +1065,167 @@ public class Kernel {
 	 * int readlink(const char *path, char *buf, size_t bufsiz); int chdir(const
 	 * char *path); mode_t umask(mode_t mask);
 	 */
+
+	public static List<Object> getFileFromPath(String fullPath) throws Exception {
+		StringBuffer dirname = new StringBuffer("/");
+		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
+		IndexNode currIndexNode = getRootIndexNode();
+		IndexNode prevIndexNode = null;
+		short indexNodeNumber = FileSystem.ROOT_INDEX_NODE_NUMBER;
+
+		StringTokenizer st = new StringTokenizer(fullPath, "/");
+		String name = "."; // start at root node
+		while (st.hasMoreTokens()) {
+			name = st.nextToken();
+			if (!name.equals("")) {
+				// check to see if the current node is a directory
+				if ((currIndexNode.getMode() & S_IFMT) != S_IFDIR) {
+					// return (ENOTDIR) if a needed directory is not a directory
+					process.errno = ENOTDIR;
+					List<Object> objects = new ArrayList<>();
+					objects.add(-1);
+					return objects;
+				}
+
+				// check to see if it is readable by the user
+				// ??? tbd
+				// return (EACCES) if a needed directory is not readable
+
+				if (st.hasMoreTokens()) {
+					dirname.append(name);
+					dirname.append('/');
+				}
+
+				// get the next inode corresponding to the token
+				prevIndexNode = currIndexNode;
+				currIndexNode = new IndexNode();
+				indexNodeNumber = findNextIndexNode(fileSystem, prevIndexNode, name, currIndexNode);
+			}
+		}
+
+		List<Object> objects = new ArrayList<>();
+		objects.add(0);
+		objects.add(dirname);
+		objects.add(fileSystem);
+		objects.add(currIndexNode);
+		objects.add(indexNodeNumber);
+		objects.add(name);
+
+		return objects;
+	}
+
+	private static void insertFile(int dir, short newInode, String name) throws Exception {
+		int status;
+		DirectoryEntry newDirectoryEntry = new DirectoryEntry(newInode, name);
+		DirectoryEntry currentDirectoryEntry = new DirectoryEntry();
+		while (true) {
+			// read an entry from the directory
+			status = readdir(dir, currentDirectoryEntry);
+			if (status < 0) {
+				System.err.println(PROGRAM_NAME + ": error reading directory in creat");
+				System.exit(EXIT_FAILURE);
+			} else if (status == 0) {
+				// if no entry read, write the new item at the current
+				// location and break
+				writedir(dir, newDirectoryEntry);
+				break;
+			} else {
+				// if current item > new item, write the new item in
+				// place of the old one and break
+				if (currentDirectoryEntry.getName().compareTo(newDirectoryEntry.getName()) > 0) {
+					int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
+					if (seek_status < 0) {
+						System.err.println(PROGRAM_NAME + ": error during seek in creat");
+						System.exit(EXIT_FAILURE);
+					}
+					writedir(dir, newDirectoryEntry);
+					break;
+				}
+			}
+		}
+		// copy the rest of the directory entries out to the file
+		while (status > 0) {
+			DirectoryEntry nextDirectoryEntry = new DirectoryEntry();
+			// read next item
+			status = readdir(dir, nextDirectoryEntry);
+			if (status > 0) {
+				// in its place
+				int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
+				if (seek_status < 0) {
+					System.err.println(PROGRAM_NAME + ": error during seek in creat");
+					System.exit(EXIT_FAILURE);
+				}
+			}
+			// write current item
+			writedir(dir, currentDirectoryEntry);
+			// current item = next item
+			currentDirectoryEntry = nextDirectoryEntry;
+		}
+
+		// close the directory
+		close(dir);
+	}
+
+	public static int link(String path1, String path2) throws Exception {
+
+		int fd = open(path1, O_RDWR);
+		if (fd < 0) {
+			process.errno = EACCES;
+			return -1;
+		}
+
+		FileDescriptor fileDescriptor1 = process.openFiles[fd];
+		IndexNode indexNode1 = fileDescriptor1.getIndexNode();
+		if ((indexNode1.getMode() & S_IFMT) == S_IFDIR) {
+			System.out.println("You can't create hard link to directory!");
+			process.errno = EISDIR;
+			return -1;
+		}
+
+		// get the full path
+		String fullPath = getFullPath(path2);
+
+		List<Object> returnParams = getFileFromPath(fullPath);
+		int errorCode = (Integer) returnParams.get(0);
+		if (errorCode != 0)
+			return errorCode;
+
+		StringBuffer dirname = (StringBuffer) returnParams.get(1);
+		IndexNode currIndexNode = (IndexNode) returnParams.get(3);
+		short indexNodeNumber = (Short) returnParams.get(4);
+		String name = (String) returnParams.get(5);
+
+		if (indexNodeNumber < 0) {
+			// file does not exist. We check to see if we can create it.
+
+			// check to see if the prevIndexNode (a directory) is writeable
+			// ??? tbd
+			// return (EACCES) if the file does not exist and the directory
+			// in which it is to be created is not writable
+
+			indexNode1.setNlink((short) (currIndexNode.getNlink() + 1));
+
+			// open the directory
+			// ??? it would be nice if we had an "open" that took an inode
+			// instead of a name for the dir
+			int dir = open(dirname.toString(), O_RDWR);
+			if (dir < 0) {
+				Kernel.perror(PROGRAM_NAME);
+				System.err.println(PROGRAM_NAME + ": unable to open directory for writing");
+				Kernel.exit(1); // ??? is this correct
+			}
+
+			// scan past the directory entries less than the current entry
+			// and insert the new element immediately following
+			insertFile(dir, fileDescriptor1.getIndexNodeNumber(), name);
+		} else {
+			process.errno = EEXIST;
+			System.err.println(PROGRAM_NAME + ": file already exists!");
+			return -1;
+		}
+
+		return open(fileDescriptor1);
+	}
 
 	/**
 	 * This is an internal variable for the simulator which always points to the

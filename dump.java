@@ -54,12 +54,12 @@ public class dump {
 				// while we are able to read bytes from it
 				int c;
 				for (int j = 0; (c = in.read()) != -1; j++) {
-					if (c > 0) {
+					// if (c > 0) {
 						System.out.print(j + " " + Integer.toHexString(c) + " " + c);
 						if (c >= 32 && c < 127)
 							System.out.print(" " + (char) c);
 						System.out.println();
-					}
+					// }
 				}
 				in.close();
 			} catch (FileNotFoundException e) {
