@@ -147,9 +147,9 @@ public class ls {
 		s.append(' ');
 
 		type = (short) stat.getMode();
-		s.append(Integer.toOctalString(type & Kernel.S_IRWXU));
+		s.append(Integer.toOctalString((type & Kernel.S_IRWXU) >> 6));
 		s.append(Integer.toOctalString((type & Kernel.S_IRWXG) >> 3));
-		s.append(Integer.toOctalString((type & Kernel.S_IRWXO) >> 6));
+		s.append(Integer.toOctalString(type & Kernel.S_IRWXO));
 
 		// append the inode number in a field of 5
 		t = Integer.toString(stat.getIno());
