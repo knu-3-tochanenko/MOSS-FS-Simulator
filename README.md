@@ -19,7 +19,7 @@ To run commands just type `commands` or `commands.bat`. Feel free to change this
 * [ ] [Task 7 : Vlad / Taya](#task-7)
 
 ### Task 1
-Use `mkfs` to create a file system with a block size of 64 bytes and having a total of 8 blocks. How many index nodes will fit in a block? How many directory entries will fit in a block? Use dump to examine the file system backing file, and note the value in byte 64. What does this value represent? Use `mkdir` to create a directory (e.g., `/usr`), and then use dump to examine byte 64 again. What do you notice? Repeat the process of creating a directory (e.g., `/bin`, `/lib`, `/var`, `/etc`, `/home`, `/mnt`, etc.) and examining with dump. How many directories can you create before you fill up the file system? Explain why.
+Use `mkfs` to create a file system with a block size of 64 bytes and having a total of 8 blocks. How many index nodes will fit in a block? How many directory entries will fit in a block? Use `dump` to examine the file system backing file, and note the value in byte 64. What does this value represent? Use `mkdir` to create a directory (e.g., `/usr`), and then use dump to examine byte 64 again. What do you notice? Repeat the process of creating a directory (e.g., `/bin`, `/lib`, `/var`, `/etc`, `/home`, `/mnt`, etc.) and examining with dump. How many directories can you create before you fill up the file system? Explain why.
 
 ### Task 2
 Enhance `ls.java` to display for each file the uid and gid as decimal numbers, and the 9 low-order bits of mode as a 3-digit octal number (i.e., 000..777).
