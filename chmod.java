@@ -17,9 +17,9 @@ public class chmod {
             Kernel.exit(1);
         }
 
-        int status;
+        short status;
         for (int i = 1; i < args.length; i++) {
-            status = Kernel.chmod(args[i], mode);
+            status = (short) Kernel.chmod(args[i], mode);
 
             if (status < 0) {
                 Kernel.perror(PROGRAM_NAME + ": Can't find inode");

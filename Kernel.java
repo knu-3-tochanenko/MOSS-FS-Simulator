@@ -434,6 +434,8 @@ public class Kernel {
 
 			currIndexNode.setMode((short) newMode);
 			currIndexNode.setNlink((short) 1);
+			currIndexNode.setUid(process.getUid());
+			currIndexNode.setGid(process.getGid());
 
 			// allocate the next available inode from the file system
 			short newInode = fileSystem.allocateIndexNode();
@@ -1063,20 +1065,23 @@ public class Kernel {
 
 		IndexNode currIndexNode = new IndexNode();
 		short currIndexNodeNumber = getIndexNodeNumber(pathname, currIndexNode);
-	
+
 		if (process.getUid() != currIndexNode.getUid() && process.getUid() != 0) {
-		  // not owner or super-user
-		  process.errno = EPERM;
-		  return -1;
+			// not owner or super-user
+			process.errno = EPERM;
+			return -1;
 		}
 
 		closeChanged(currIndexNodeNumber);
 		currIndexNode.setGid(gid);
 		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
 		fileSystem.writeIndexNode(currIndexNode, currIndexNodeNumber);
-	
+
+		System.out.println(currIndexNode.getGid());
+		System.out.println(currIndexNode.getUid());
+
 		return gid;
-	  }
+	}
 
 	/*
 	 * ----------------- TASK 4 FINISHED -----------------
@@ -1509,7 +1514,7 @@ public class Kernel {
 		if (pathname.startsWith("/"))
 			fullPath = pathname;
 		else
-			fullPath = process.getDir() + "/" + pathname;
+			fullPath = "/" + pathname;
 		return fullPath;
 	}
 
@@ -1555,6 +1560,7 @@ public class Kernel {
 				// encountered an error, so quit
 				break;
 			}
+
 			if (directoryEntry.getName().equals(name)) {
 				indexNodeNumber = directoryEntry.getIno();
 				// read the inode block
@@ -1630,7 +1636,7 @@ public class Kernel {
 		var indexNode = new IndexNode();
 
 		// check user: only the owner or super user can change it
-		if (process.getUid() != indexNode.getUid() && process.getUid() != 0) {
+		if (process.getUid() != 0) {
 			process.errno = EPERM;
 			return -1;
 		}
@@ -1671,7 +1677,7 @@ public class Kernel {
 	private static short getIndexNodeNumber(String name, IndexNode indexNode) throws Exception {
 		String fullPath = getFullPath(name);
 		var newIndexNode = new IndexNode();
-		short indexNodeNumber = findIndexNode(fullPath, indexNode);
+		short indexNodeNumber = findIndexNode(fullPath, newIndexNode);
 
 		if (indexNodeNumber < 0) {
 			return -1;
@@ -1693,7 +1699,7 @@ public class Kernel {
 		short mask = S_IRWXU | S_IRWXG | S_IRWXO;
 		// Delete old 9 low-ordered digits and set new mode
 		short mode = (short) (oldMode & ~mask);
-		mode = (short) (mode & newMode);
+		mode = (short) (mode | newMode);
 		return mode;
 	}
 }
