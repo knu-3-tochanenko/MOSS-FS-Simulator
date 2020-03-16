@@ -380,39 +380,16 @@ public class Kernel {
 		// get the full path
 		String fullPath = getFullPath(pathname);
 
-		StringBuffer dirname = new StringBuffer("/");
-		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
-		IndexNode currIndexNode = getRootIndexNode();
-		IndexNode prevIndexNode = null;
-		short indexNodeNumber = FileSystem.ROOT_INDEX_NODE_NUMBER;
+		List<Object> returnParams = getFileFromPath(fullPath);
+		int errorCode = (Integer) returnParams.get(0);
+		if (errorCode != 0)
+			return errorCode;
 
-		StringTokenizer st = new StringTokenizer(fullPath, "/");
-		String name = "."; // start at root node
-		while (st.hasMoreTokens()) {
-			name = st.nextToken();
-			if (!name.equals("")) {
-				// check to see if the current node is a directory
-				if ((currIndexNode.getMode() & S_IFMT) != S_IFDIR) {
-					// return (ENOTDIR) if a needed directory is not a directory
-					process.errno = ENOTDIR;
-					return -1;
-				}
-
-				// check to see if it is readable by the user
-				// ??? tbd
-				// return (EACCES) if a needed directory is not readable
-
-				if (st.hasMoreTokens()) {
-					dirname.append(name);
-					dirname.append('/');
-				}
-
-				// get the next inode corresponding to the token
-				prevIndexNode = currIndexNode;
-				currIndexNode = new IndexNode();
-				indexNodeNumber = findNextIndexNode(fileSystem, prevIndexNode, name, currIndexNode);
-			}
-		}
+		StringBuffer dirname = (StringBuffer) returnParams.get(1);
+		FileSystem fileSystem = (FileSystem) returnParams.get(2);
+		IndexNode currIndexNode = (IndexNode) returnParams.get(3);
+		short indexNodeNumber = (Short) returnParams.get(4);
+		String name = (String) returnParams.get(5);
 
 		// ??? we need to set some fields in the file descriptor
 		int flags = O_WRONLY; // ???
@@ -426,7 +403,35 @@ public class Kernel {
 			// return (EACCES) if the file does not exist and the directory
 			// in which it is to be created is not writable
 
-			currIndexNode.setMode(mode);
+			int protectionInfo = 0;
+
+			if ((mode & S_IFMT) == S_IFDIR) {
+				protectionInfo |= S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH
+						| S_IXOTH;
+			} else if ((mode & S_IFMT) == S_IFREG) {
+				protectionInfo |= S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+			} else {
+				System.out.println("You're trying to create not regular file or directory");
+				return -1;
+			}
+
+			String protectionInfoOctal = Integer.toOctalString(protectionInfo),
+					umaskOctal = String.format("%03o", process.getUmask());
+
+			StringBuilder resultPermission = new StringBuilder();
+
+			for (int i = 0; i < protectionInfoOctal.length(); i++) {
+				if (protectionInfoOctal.charAt(i) >= umaskOctal.charAt(i))
+					resultPermission.append(protectionInfoOctal.charAt(i) - umaskOctal.charAt(i));
+				else
+					resultPermission.append(0);
+			}
+
+			protectionInfo = Integer.parseInt(resultPermission.toString(), 8);
+
+			int oldPermissions = mode % ((int) Math.pow(2, 9)), newMode = mode - oldPermissions + protectionInfo;
+
+			currIndexNode.setMode((short) newMode);
 			currIndexNode.setNlink((short) 1);
 
 			// allocate the next available inode from the file system
@@ -454,55 +459,7 @@ public class Kernel {
 
 			// scan past the directory entries less than the current entry
 			// and insert the new element immediately following
-			int status;
-			DirectoryEntry newDirectoryEntry = new DirectoryEntry(newInode, name);
-			DirectoryEntry currentDirectoryEntry = new DirectoryEntry();
-			while (true) {
-				// read an entry from the directory
-				status = readdir(dir, currentDirectoryEntry);
-				if (status < 0) {
-					System.err.println(PROGRAM_NAME + ": error reading directory in creat");
-					System.exit(EXIT_FAILURE);
-				} else if (status == 0) {
-					// if no entry read, write the new item at the current
-					// location and break
-					writedir(dir, newDirectoryEntry);
-					break;
-				} else {
-					// if current item > new item, write the new item in
-					// place of the old one and break
-					if (currentDirectoryEntry.getName().compareTo(newDirectoryEntry.getName()) > 0) {
-						int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
-						if (seek_status < 0) {
-							System.err.println(PROGRAM_NAME + ": error during seek in creat");
-							System.exit(EXIT_FAILURE);
-						}
-						writedir(dir, newDirectoryEntry);
-						break;
-					}
-				}
-			}
-			// copy the rest of the directory entries out to the file
-			while (status > 0) {
-				DirectoryEntry nextDirectoryEntry = new DirectoryEntry();
-				// read next item
-				status = readdir(dir, nextDirectoryEntry);
-				if (status > 0) {
-					// in its place
-					int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
-					if (seek_status < 0) {
-						System.err.println(PROGRAM_NAME + ": error during seek in creat");
-						System.exit(EXIT_FAILURE);
-					}
-				}
-				// write current item
-				writedir(dir, currentDirectoryEntry);
-				// current item = next item
-				currentDirectoryEntry = nextDirectoryEntry;
-			}
-
-			// close the directory
-			close(dir);
+			insertFile(dir, newInode, name);
 		} else {
 			// file does exist ( indexNodeNumber >= 0 )
 
@@ -538,7 +495,6 @@ public class Kernel {
 			fileDescriptor = new FileDescriptor(fileSystem, currIndexNode, flags);
 			// assign inode for the new file
 			fileDescriptor.setIndexNodeNumber(indexNodeNumber);
-
 		}
 
 		return open(fileDescriptor);
@@ -1066,6 +1022,36 @@ public class Kernel {
 	 * char *path); mode_t umask(mode_t mask);
 	 */
 
+	/*
+	 * ----------------- TASK 6 STARTED ------------------
+	 */
+
+	public static short umask(short newUmask) {
+		try {
+			newUmask = Short.parseShort(Short.toString(newUmask));
+		} catch (NumberFormatException e) {
+			System.err.println(PROGRAM_NAME + ": invalid number for property process.umask");
+			System.exit(EXIT_FAILURE);
+		}
+
+		if (0 < newUmask || newUmask > Integer.parseInt("777", 8)) {
+			process.errno = EINVAL;
+		}
+
+		short oldUmask = process.getUmask();
+		System.out.println("Set umask to " + String.format("%03o", newUmask));
+		process.setUmask(newUmask);
+		return oldUmask;
+	}
+
+	/*
+	 * ----------------- TASK 6 FINISHED -----------------
+	 */
+
+	/*
+	 * ----------------- TASK 7 STARTED ------------------
+	 */
+
 	public static List<Object> getFileFromPath(String fullPath) throws Exception {
 		StringBuffer dirname = new StringBuffer("/");
 		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
@@ -1212,8 +1198,8 @@ public class Kernel {
 		return open(fileDescriptor1);
 	}
 	/*
-	* ----------------- TASK 7 FINISHED -----------------
-	*/
+	 * ----------------- TASK 7 FINISHED -----------------
+	 */
 
 	/**
 	 * This is an internal variable for the simulator which always points to the
