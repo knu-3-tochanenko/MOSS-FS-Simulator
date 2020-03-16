@@ -1104,6 +1104,9 @@ public class Kernel {
 		}
 
 		short oldUmask = process.getUmask();
+		System.out.println("Old mask" + String.format("%16s", Integer.toBinaryString(oldUmask)));
+		System.out.println("New mask " + String.format("%16s", Integer.toBinaryString(newUmask)));
+
 		System.out.println("Set umask to " + String.format("%03o", newUmask));
 		process.setUmask(newUmask);
 		return oldUmask;
