@@ -1035,7 +1035,7 @@ public class Kernel {
 			return -1;
 		}
 		IndexNode currIndexNode = new IndexNode();
-		short currIndexNodeNumber = getCurrIndexNodeNumber(pathname, currIndexNode);
+		short currIndexNodeNumber = getIndexNodeNumber(pathname, currIndexNode);
 		// System.out.println("Before:" + process.getUid() + " " +
 		// currIndexNode.getUid());
 		// short currIndexNodeNumber = fileDescriptor.getIndexNodeNumber();
@@ -1046,24 +1046,6 @@ public class Kernel {
 		// System.out.println("After: " + process.getUid() + " " +
 		// currIndexNode.getUid());
 		return uid;
-	}
-
-	public static short getCurrIndexNodeNumber(String pathname, IndexNode currIndexNode) throws Exception {
-
-		String fullPath = getFullPath(pathname);
-		IndexNode indexNode = new IndexNode();
-		short currIndexNodeNumber = findIndexNode(fullPath, indexNode);
-		if (currIndexNodeNumber < 0) {
-			return -1;
-		}
-		FileDescriptor fileDescriptor = new FileDescriptor(openFileSystems[ROOT_FILE_SYSTEM], indexNode, O_RDONLY);
-		IndexNode fileIndexNode = fileDescriptor.getIndexNode();
-		if (fileIndexNode == null) {
-			return -1;
-		}
-		fileIndexNode.copy(currIndexNode);
-
-		return currIndexNodeNumber;
 	}
 
 	public static void closeChanged(int currIndexNodeNumber) {
@@ -1078,52 +1060,6 @@ public class Kernel {
 				break;
 			}
 		}
-	}
-
-	public static int chgrp(String pathname, short gid) throws Exception {
-
-		IndexNode currIndexNode = new IndexNode();
-		short currIndexNodeNumber = getCurrIndexNodeNumber(pathname, currIndexNode);
-
-		// System.out.println(process.getUid() + " " + currIndexNode.getUid());
-		if (process.getUid() != currIndexNode.getUid() && process.getUid() != 0) {
-			// not owner or super-user
-			process.errno = EPERM;
-			return -1;
-		}
-		// short currIndexNodeNumber = fileDescriptor.getIndexNodeNumber();
-		closeChanged(currIndexNodeNumber);
-		currIndexNode.setGid(gid);
-		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
-		fileSystem.writeIndexNode(currIndexNode, currIndexNodeNumber);
-
-		return gid;
-	}
-
-	public static int chmod(String pathname, short mode) throws Exception {
-
-		IndexNode currIndexNode = new IndexNode();
-		short currIndexNodeNumber = getCurrIndexNodeNumber(pathname, currIndexNode);
-
-		if (process.getUid() != currIndexNode.getUid() && process.getUid() != 0) {
-			// not owner or super-user
-			process.errno = EPERM;
-			return -1;
-		}
-
-		// short currIndexNodeNumber = fileDescriptor.getIndexNodeNumber();
-		closeChanged(currIndexNodeNumber);
-
-		short currMode = currIndexNode.getMode();
-		mode = (short) Integer.parseInt(String.valueOf(mode), 8);
-		int oldPermissions = currMode % ((int) Math.pow(2, 9));
-		int newMode = currMode - oldPermissions + mode;
-		currIndexNode.setMode((short) newMode);
-
-		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
-		fileSystem.writeIndexNode(currIndexNode, currIndexNodeNumber);
-
-		return mode;
 	}
 
 	/*
