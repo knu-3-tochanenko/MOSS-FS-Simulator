@@ -1073,30 +1073,26 @@ public class Kernel {
 		IndexNode prevIndexNode = null;
 		short indexNodeNumber = FileSystem.ROOT_INDEX_NODE_NUMBER;
 
-		StringTokenizer st = new StringTokenizer(fullPath, "/");
-		String name = "."; // start at root node
-		while (st.hasMoreTokens()) {
-			name = st.nextToken();
+		StringTokenizer stringTokenizer = new StringTokenizer(fullPath, "/");
+		String name = "."; // empty path
+		while (stringTokenizer.hasMoreTokens()) {
+			name = stringTokenizer.nextToken();
 			if (!name.equals("")) {
-				// check to see if the current node is a directory
+				// check if given path is a directory
 				if ((currIndexNode.getMode() & S_IFMT) != S_IFDIR) {
-					// return (ENOTDIR) if a needed directory is not a directory
+					// return (ENOTDIR) if dirrectory turned out to be not a directory
 					process.errno = ENOTDIR;
 					List<Object> objects = new ArrayList<>();
 					objects.add(-1);
 					return objects;
 				}
 
-				// check to see if it is readable by the user
-				// ??? tbd
-				// return (EACCES) if a needed directory is not readable
-
-				if (st.hasMoreTokens()) {
+				if (stringTokenizer.hasMoreTokens()) {
 					dirname.append(name);
 					dirname.append('/');
 				}
 
-				// get the next inode corresponding to the token
+				// get the next inode
 				prevIndexNode = currIndexNode;
 				currIndexNode = new IndexNode();
 				indexNodeNumber = findNextIndexNode(fileSystem, prevIndexNode, name, currIndexNode);
@@ -1119,19 +1115,17 @@ public class Kernel {
 		DirectoryEntry newDirectoryEntry = new DirectoryEntry(newInode, name);
 		DirectoryEntry currentDirectoryEntry = new DirectoryEntry();
 		while (true) {
-			// read an entry from the directory
+			// read status from the directory
 			status = readdir(dir, currentDirectoryEntry);
 			if (status < 0) {
 				System.err.println(PROGRAM_NAME + ": error reading directory in creat");
 				System.exit(EXIT_FAILURE);
 			} else if (status == 0) {
-				// if no entry read, write the new item at the current
-				// location and break
+				// if no entry read, write the new item
 				writedir(dir, newDirectoryEntry);
 				break;
 			} else {
-				// if current item > new item, write the new item in
-				// place of the old one and break
+				// if current item > new item replace old item with new item
 				if (currentDirectoryEntry.getName().compareTo(newDirectoryEntry.getName()) > 0) {
 					int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
 					if (seek_status < 0) {
@@ -1146,29 +1140,23 @@ public class Kernel {
 		// copy the rest of the directory entries out to the file
 		while (status > 0) {
 			DirectoryEntry nextDirectoryEntry = new DirectoryEntry();
-			// read next item
 			status = readdir(dir, nextDirectoryEntry);
 			if (status > 0) {
-				// in its place
 				int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
 				if (seek_status < 0) {
 					System.err.println(PROGRAM_NAME + ": error during seek in creat");
 					System.exit(EXIT_FAILURE);
 				}
 			}
-			// write current item
 			writedir(dir, currentDirectoryEntry);
-			// current item = next item
 			currentDirectoryEntry = nextDirectoryEntry;
 		}
-
-		// close the directory
 		close(dir);
 	}
 
-	public static int link(String path1, String path2) throws Exception {
+	public static int link(String pathFrom, String pathTo) throws Exception {
 
-		int fd = open(path1, O_RDWR);
+		int fd = open(pathFrom, O_RDWR);
 		if (fd < 0) {
 			process.errno = EACCES;
 			return -1;
@@ -1182,8 +1170,7 @@ public class Kernel {
 			return -1;
 		}
 
-		// get the full path
-		String fullPath = getFullPath(path2);
+		String fullPath = getFullPath(pathTo);
 
 		List<Object> returnParams = getFileFromPath(fullPath);
 		int errorCode = (Integer) returnParams.get(0);
@@ -1199,20 +1186,18 @@ public class Kernel {
 			// file does not exist. We check to see if we can create it.
 
 			// check to see if the prevIndexNode (a directory) is writeable
-			// ??? tbd
 			// return (EACCES) if the file does not exist and the directory
 			// in which it is to be created is not writable
 
 			indexNode1.setNlink((short) (currIndexNode.getNlink() + 1));
 
 			// open the directory
-			// ??? it would be nice if we had an "open" that took an inode
 			// instead of a name for the dir
 			int dir = open(dirname.toString(), O_RDWR);
 			if (dir < 0) {
 				Kernel.perror(PROGRAM_NAME);
 				System.err.println(PROGRAM_NAME + ": unable to open directory for writing");
-				Kernel.exit(1); // ??? is this correct
+				Kernel.exit(1);
 			}
 
 			// scan past the directory entries less than the current entry
@@ -1226,6 +1211,9 @@ public class Kernel {
 
 		return open(fileDescriptor1);
 	}
+	/*
+	* ----------------- TASK 7 FINISHED -----------------
+	*/
 
 	/**
 	 * This is an internal variable for the simulator which always points to the
