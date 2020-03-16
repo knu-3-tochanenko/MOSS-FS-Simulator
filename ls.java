@@ -132,6 +132,24 @@ public class ls {
 
 		// a temporary string
 		String t = null;
+		short type;
+
+		// append uid of file
+		type = stat.getUid();
+		s.append(' ');
+		s.append(type);
+		s.append(' ');
+
+		// append gid of file
+		type = stat.getGid();
+		s.append(' ');
+		s.append(type);
+		s.append(' ');
+
+		type = (short) stat.getMode();
+		s.append(Integer.toOctalString(type & Kernel.S_IRWXU));
+		s.append(Integer.toOctalString((type & Kernel.S_IRWXG) >> 3));
+		s.append(Integer.toOctalString((type & Kernel.S_IRWXO) >> 6));
 
 		// append the inode number in a field of 5
 		t = Integer.toString(stat.getIno());
