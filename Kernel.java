@@ -7,6 +7,7 @@ import java.util.StringTokenizer;
 import java.util.Properties;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.io.FileNotFoundException;
 
 /*
@@ -1429,4 +1430,74 @@ public class Kernel {
 		return indexNodeNumber;
 	}
 
+	public static int chmod(String name, short mode) throws Exception {
+		var indexNode = new IndexNode();
+
+		// check user: only the owner or super user can change it
+		if (process.getUid() != indexNode.getUid() && process.getUid() != 0) {
+			process.errno = EPERM;
+			return -1;
+		}
+
+		short indexNodeNumber = getIndexNodeNumber(name, indexNode);
+
+		// Close all files in directory before change
+		closeFiles(indexNodeNumber);
+
+		short oldMode = indexNode.getMode();
+		short newMode = changeMode(oldMode, mode);
+
+		indexNode.setMode(newMode);
+
+		FileSystem fileSystem = openFileSystems[ROOT_FILE_SYSTEM];
+		fileSystem.writeIndexNode(indexNode, indexNodeNumber);
+
+		return newMode & (S_IRWXU | S_IRWXG | S_IRWXO);
+	}
+
+	private static void closeFiles(int nodeNumber) {
+		FileDescriptor fileDescriptor;
+		int indexNodeNumber;
+		for (int i = 0; i < process.openFiles.length; i++) {
+			fileDescriptor = process.openFiles[i];
+			if (fileDescriptor == null) {
+				break;
+			}
+			indexNodeNumber = fileDescriptor.getIndexNodeNumber();
+			if (nodeNumber == indexNodeNumber) {
+				Kernel.close(i);
+				break;
+			}
+		}
+
+	}
+
+	private static short getIndexNodeNumber(String name, IndexNode indexNode) throws Exception {
+		String fullPath = getFullPath(name);
+		var newIndexNode = new IndexNode();
+		short indexNodeNumber = findIndexNode(fullPath, indexNode);
+
+		if (indexNodeNumber < 0) {
+			return -1;
+		}
+
+		var fileDescriptor = new FileDescriptor(openFileSystems[ROOT_FILE_SYSTEM], newIndexNode, O_RDONLY);
+		IndexNode fileIndexNode = fileDescriptor.getIndexNode();
+		if (fileIndexNode == null) {
+			return -1;
+		}
+
+		fileIndexNode.copy(indexNode);
+
+		return indexNodeNumber;
+	}
+
+	// Only 9 low-order digits are affected
+	private static short changeMode(short oldMode, short newMode) {
+		short mask = S_IRWXU | S_IRWXG | S_IRWXO;
+		// Delete old 9 low-ordered digits and set new mode
+		short mode = (short) (oldMode & ~mask);
+		mode = (short) (mode & newMode);
+		return mode;
+	}
 }
