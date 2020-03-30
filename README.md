@@ -11,12 +11,12 @@ To run commands just type `commands` or `commands.bat`. Feel free to change this
 ## Task list
 * [ ] DONE ALL
 * [ ] [Task 1 : Vlad / Taya](#task-1)
-* [ ] [Task 2 : Vlad / Taya](#task-2)
-* [ ] [Task 3 : Vlad / Taya](#task-3)
-* [ ] [Task 4 : Vlad / Taya](#task-4)
-* [ ] [Task 5 : Vlad / Taya](#task-5)
-* [ ] [Task 6 : Vlad / Taya](#task-6)
-* [ ] [Task 7 : Vlad / Taya](#task-7)
+* [X] [Task 2 : Taya](#task-2)
+* [X] [Task 3 : Taya](#task-3)
+* [X] [Task 4 : Vlad](#task-4)
+* [X] [Task 5 : Taya](#task-5)
+* [X] [Task 6 : Vlad](#task-6)
+* [X] [Task 7 : Vlad](#task-7)
 
 ### Task 1
 Use `mkfs` to create a file system with a block size of 64 bytes and having a total of 8 blocks. How many index nodes will fit in a block? How many directory entries will fit in a block? Use `dump` to examine the file system backing file, and note the value in byte 64. What does this value represent? Use `mkdir` to create a directory (e.g., `/usr`), and then use dump to examine byte 64 again. What do you notice? Repeat the process of creating a directory (e.g., `/bin`, `/lib`, `/var`, `/etc`, `/home`, `/mnt`, etc.) and examining with dump. How many directories can you create before you fill up the file system? Explain why.
