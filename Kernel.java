@@ -1031,7 +1031,7 @@ public class Kernel {
 
 	public static int chown(String pathname, short uid) throws Exception {
 
-		if (process.getUid() != 0) {
+		if (process.getUid() != 0 || process.getUid() != process.getUid()) {
 			// not super-user
 			process.errno = EPERM;
 			return -1;
@@ -1093,14 +1093,15 @@ public class Kernel {
 
 	public static short umask(short newUmask) {
 		try {
-			newUmask = Short.parseShort(Short.toString(newUmask));
+			newUmask = Short.parseShort(Short.toString(newUmask), 8);
 		} catch (NumberFormatException e) {
 			System.err.println(PROGRAM_NAME + ": invalid number for property process.umask");
 			System.exit(EXIT_FAILURE);
 		}
 
-		if (0 < newUmask || newUmask > Integer.parseInt("777", 8)) {
+		if (0 > newUmask || newUmask > Integer.parseInt("777", 8)) {
 			process.errno = EINVAL;
+			return -1;
 		}
 
 		short oldUmask = process.getUmask();
@@ -1636,7 +1637,7 @@ public class Kernel {
 	}
 
 	public static int chmod(String name, short mode) throws Exception {
-		var indexNode = new IndexNode();
+		IndexNode indexNode = new IndexNode();
 
 		// check user: only the owner or super user can change it
 		if (process.getUid() != 0) {
@@ -1679,14 +1680,14 @@ public class Kernel {
 
 	private static short getIndexNodeNumber(String name, IndexNode indexNode) throws Exception {
 		String fullPath = getFullPath(name);
-		var newIndexNode = new IndexNode();
+		IndexNode newIndexNode = new IndexNode();
 		short indexNodeNumber = findIndexNode(fullPath, newIndexNode);
 
 		if (indexNodeNumber < 0) {
 			return -1;
 		}
 
-		var fileDescriptor = new FileDescriptor(openFileSystems[ROOT_FILE_SYSTEM], newIndexNode, O_RDONLY);
+		FileDescriptor fileDescriptor = new FileDescriptor(openFileSystems[ROOT_FILE_SYSTEM], newIndexNode, O_RDONLY);
 		IndexNode fileIndexNode = fileDescriptor.getIndexNode();
 		if (fileIndexNode == null) {
 			return -1;

@@ -18,7 +18,7 @@ public class chown {
         Kernel.initialize();
 
         // if no paths to link
-        if (argv.length != 2) {
+        if (argv.length < 2) {
             System.err.println(PROGRAM_NAME + ": usage: java " + PROGRAM_NAME + " <uid_number> <entry_names>...");
             Kernel.exit(1);
         }
