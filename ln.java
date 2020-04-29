@@ -19,12 +19,15 @@ public class ln {
 
         // if no paths to link
         if (argv.length != 2) {
-            System.err.println(PROGRAM_NAME + ": usage: java " + PROGRAM_NAME + " input-file1 input-file2");
+            System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <path-1> <path-2>"));
+            System.out.println(ANSI.Blue("\t<path-1>") + " :\n\tPath to be copied");
+            System.out.println(ANSI.Blue("\t<path-2>") + " :\n\tWhere to copy");
             Kernel.exit(1);
         }
 
-        System.out.println("Path 1: " + argv[0]);
-        System.out.println("Path 2: " + argv[1]);
+        System.out.println(ANSI.Blue("Path 1: ") + argv[0]);
+        System.out.println(ANSI.Blue("Path 2: ") + argv[1]);
         int result = Kernel.link(argv[0], argv[1]);
 
         if (result < 0) {

@@ -7,7 +7,9 @@ class find {
         Kernel.initialize();
 
         if (args.length != 1) {
-            Kernel.perror(PROGRAM_NAME + ": wrong signature. It has to be : java find [name]");
+            System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <path>"));
+            System.out.println(ANSI.Blue("\t<path>") + " :\n\tPath to directory\n\tChecks if it exists\n\tOutputs list of directories and files in directory");
             Kernel.exit(1);
         }
 
@@ -39,7 +41,7 @@ class find {
 
             if (fd < 0) {
                 Kernel.perror(PROGRAM_NAME);
-                System.err.println(PROGRAM_NAME + ": unable to open \"" + name + "\" for reading");
+                System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open \"") + ANSI.Yellow(name) + ANSI.Red("\" for reading"));
                 Kernel.exit(1);
             } else {
                 // create a directory entry structure to hold data as we read

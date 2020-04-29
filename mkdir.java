@@ -58,7 +58,9 @@ public class mkdir {
 
 		// print a helpful message if no command line arguments are given
 		if (args.length < 1) {
-			System.err.println(PROGRAM_NAME + ": too few arguments");
+			System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <path>"));
+            System.out.println(ANSI.Blue("\t<path>") + " :\n\tPath to be created");
 			Kernel.exit(1);
 		}
 

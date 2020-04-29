@@ -60,7 +60,12 @@ public class tee {
 
 		// print a helpful message if the number of arguments is not correct
 		if (argv.length != 1) {
-			System.err.println(PROGRAM_NAME + ": usage: java " + PROGRAM_NAME + " output-file");
+			System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <output-file>"));
+            System.out.println(ANSI.Blue("\t<output-file>") + " :\n\tPath to file to where an input should be copied\n\tCreates file if it doesn't exist");
+			System.out.println(ANSI.Red("Usage: ") + "echo " + ANSI.Green("<string>") + " | java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <output-file>"));
+            System.out.println(ANSI.Blue("\t<string>") + " :\n\tData to be saved in file");
+            System.out.println(ANSI.Blue("\t<output-file>") + " :\n\tPath to file to where an input should be copied\n\tCreates file if it doesn't exist");
 			Kernel.exit(1);
 		}
 
@@ -71,7 +76,7 @@ public class tee {
 		int out_fd = Kernel.creat(name, OUTPUT_MODE);
 		if (out_fd < 0) {
 			Kernel.perror(PROGRAM_NAME);
-			System.err.println(PROGRAM_NAME + ": unable to open output file \"" + name + "\"");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open output file \"") + ANSI.Yellow(name) + ANSI.Red("\""));
 			Kernel.exit(2);
 		}
 
@@ -92,7 +97,7 @@ public class tee {
 			int wr_count = Kernel.write(out_fd, buffer, rd_count);
 			if (wr_count <= 0) {
 				Kernel.perror(PROGRAM_NAME);
-				System.err.println(PROGRAM_NAME + ": error during write to output file");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error during write to output file"));
 				Kernel.exit(3);
 			}
 

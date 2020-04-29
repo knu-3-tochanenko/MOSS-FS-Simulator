@@ -52,7 +52,9 @@ public class cat {
 
 		// display a helpful message if no arguments are given
 		if (argv.length == 0) {
-			System.err.println(PROGRAM_NAME + ": usage: java " + PROGRAM_NAME + " input-file ...");
+			System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <path>"));
+            System.out.println(ANSI.Blue("\t<path>") + " :\n\tPath to file\n\tOutputs it's content");
 			Kernel.exit(1);
 		}
 
@@ -64,7 +66,7 @@ public class cat {
 			int in_fd = Kernel.open(name, Kernel.O_RDONLY);
 			if (in_fd < 0) {
 				Kernel.perror(PROGRAM_NAME);
-				System.err.println(PROGRAM_NAME + ": unable to open input file \"" + name + "\"");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open input file \"") + ANSI.Yellow(name) + ANSI.Red("\""));
 				Kernel.exit(2);
 			}
 
@@ -91,7 +93,7 @@ public class cat {
 			// exit with failure if we encounter an error
 			if (rd_count < 0) {
 				Kernel.perror(PROGRAM_NAME);
-				System.err.println(PROGRAM_NAME + ": error during read from input file");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error during read from input file"));
 				Kernel.exit(3);
 			}
 		}

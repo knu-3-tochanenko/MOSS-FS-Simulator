@@ -13,7 +13,10 @@ public class chgrp {
 
         // if no paths to link
         if (args.length < 2) {
-            Kernel.perror("USAGE: chown <gid_number> <entry_names>...");
+            System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <gid_number> <entry_names>..."));
+            System.out.println(ANSI.Blue("\t<gid_number>") + " :\n\tNew GID");
+            System.out.println(ANSI.Blue("\t<entry_names>") + " :\n\tOne or more paths to files\n\tChages file's GID");
             Kernel.exit(1);
         }
         short gid = Short.valueOf(args[0]);
@@ -21,7 +24,7 @@ public class chgrp {
             int status = Kernel.chgrp(args[i], gid);
             if (status < 0) {
                 Kernel.perror(PROGRAM_NAME);
-                System.err.println(PROGRAM_NAME + ": unable to find inode");
+                System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to find inode"));
                 Kernel.exit(1);
             }
         }

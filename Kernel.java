@@ -152,9 +152,9 @@ public class Kernel {
 		if ((process.errno > 0) && (process.errno < sys_nerr))
 			message = sys_errlist[process.errno];
 		if (message == null)
-			System.err.println(s + ": unknown errno " + process.errno);
+			System.out.println(ANSI.Yellow(s) + ANSI.Red(": unknown errno ") + ANSI.Yellow("" + process.errno));
 		else
-			System.err.println(s + ": " + message);
+			System.out.println(ANSI.Yellow(s) + ANSI.Red(": " + message));
 	}
 
 	/**
@@ -170,7 +170,7 @@ public class Kernel {
 	 */
 	public static void setErrno(int newErrno) {
 		if (process == null) {
-			System.err.println(PROGRAM_NAME + ": no current process in setErrno()");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": no current process in setErrno()"));
 			System.exit(EXIT_FAILURE);
 		}
 		process.errno = newErrno;
@@ -189,7 +189,7 @@ public class Kernel {
 	 */
 	public static int getErrno() {
 		if (process == null) {
-			System.err.println(PROGRAM_NAME + ": no current process in getErrno()");
+			System.err.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": no current process in getErrno()"));
 			System.exit(EXIT_FAILURE);
 		}
 		return process.errno;
@@ -412,7 +412,7 @@ public class Kernel {
 			} else if ((mode & S_IFMT) == S_IFREG) {
 				protectionInfo |= S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
 			} else {
-				System.out.println("You're trying to create not regular file or directory");
+				System.out.println(ANSI.Red("You're trying to create not regular file or directory"));
 				return -1;
 			}
 
@@ -456,7 +456,7 @@ public class Kernel {
 			int dir = open(dirname.toString(), O_RDWR);
 			if (dir < 0) {
 				Kernel.perror(PROGRAM_NAME);
-				System.err.println(PROGRAM_NAME + ": unable to open directory for writing");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open directory for writing"));
 				Kernel.exit(1); // ??? is this correct
 			}
 
@@ -1095,7 +1095,7 @@ public class Kernel {
 		try {
 			newUmask = Short.parseShort(Short.toString(newUmask), 8);
 		} catch (NumberFormatException e) {
-			System.err.println(PROGRAM_NAME + ": invalid number for property process.umask");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": invalid number for property process.umask"));
 			System.exit(EXIT_FAILURE);
 		}
 
@@ -1105,10 +1105,10 @@ public class Kernel {
 		}
 
 		short oldUmask = process.getUmask();
-		System.out.println("Old mask" + String.format("%16s", Integer.toBinaryString(oldUmask)));
-		System.out.println("New mask " + String.format("%16s", Integer.toBinaryString(newUmask)));
+		System.out.println(ANSI.Blue("Old mask ") + String.format("%16s", Integer.toBinaryString(oldUmask)));
+		System.out.println(ANSI.Blue("New mask ") + String.format("%16s", Integer.toBinaryString(newUmask)));
 
-		System.out.println("Set umask to " + String.format("%03o", newUmask));
+		System.out.println(ANSI.Blue("Set umask to ") + String.format("%03o", newUmask));
 		process.setUmask(newUmask);
 		return oldUmask;
 	}
@@ -1173,7 +1173,7 @@ public class Kernel {
 			// read status from the directory
 			status = readdir(dir, currentDirectoryEntry);
 			if (status < 0) {
-				System.err.println(PROGRAM_NAME + ": error reading directory in creat");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error reading directory in creat"));
 				System.exit(EXIT_FAILURE);
 			} else if (status == 0) {
 				// if no entry read, write the new item
@@ -1184,7 +1184,7 @@ public class Kernel {
 				if (currentDirectoryEntry.getName().compareTo(newDirectoryEntry.getName()) > 0) {
 					int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
 					if (seek_status < 0) {
-						System.err.println(PROGRAM_NAME + ": error during seek in creat");
+						System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error during seek in creat"));
 						System.exit(EXIT_FAILURE);
 					}
 					writedir(dir, newDirectoryEntry);
@@ -1199,7 +1199,7 @@ public class Kernel {
 			if (status > 0) {
 				int seek_status = lseek(dir, -DirectoryEntry.DIRECTORY_ENTRY_SIZE, 1);
 				if (seek_status < 0) {
-					System.err.println(PROGRAM_NAME + ": error during seek in creat");
+					System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error during seek in creat"));
 					System.exit(EXIT_FAILURE);
 				}
 			}
@@ -1220,7 +1220,7 @@ public class Kernel {
 		FileDescriptor fileDescriptor1 = process.openFiles[fd];
 		IndexNode indexNode1 = fileDescriptor1.getIndexNode();
 		if ((indexNode1.getMode() & S_IFMT) == S_IFDIR) {
-			System.out.println("You can't create hard link to directory!");
+			System.out.println(ANSI.Red("You can't create hard link to directory!"));
 			process.errno = EISDIR;
 			return -1;
 		}
@@ -1251,7 +1251,7 @@ public class Kernel {
 			int dir = open(dirname.toString(), O_RDWR);
 			if (dir < 0) {
 				Kernel.perror(PROGRAM_NAME);
-				System.err.println(PROGRAM_NAME + ": unable to open directory for writing");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open directory for writing"));
 				Kernel.exit(1);
 			}
 
@@ -1260,7 +1260,7 @@ public class Kernel {
 			insertFile(dir, fileDescriptor1.getIndexNodeNumber(), name);
 		} else {
 			process.errno = EEXIST;
-			System.err.println(PROGRAM_NAME + ": file already exists!");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": file already exists!"));
 			return -1;
 		}
 
@@ -1315,10 +1315,10 @@ public class Kernel {
 			properties.load(in);
 			in.close();
 		} catch (FileNotFoundException e) {
-			System.err.println(PROGRAM_NAME + ": error opening properties file");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error opening properties file"));
 			System.exit(EXIT_FAILURE);
 		} catch (IOException e) {
-			System.err.println(PROGRAM_NAME + ": error reading properties file");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error reading properties file"));
 			System.exit(EXIT_FAILURE);
 		}
 
@@ -1331,7 +1331,7 @@ public class Kernel {
 		try {
 			uid = Short.parseShort(properties.getProperty("process.uid", "1"));
 		} catch (NumberFormatException e) {
-			System.err.println(PROGRAM_NAME + ": invalid number for property process.uid in configuration file");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": invalid number for property process.uid in configuration file"));
 			System.exit(EXIT_FAILURE);
 		}
 
@@ -1339,7 +1339,7 @@ public class Kernel {
 		try {
 			gid = Short.parseShort(properties.getProperty("process.gid", "1"));
 		} catch (NumberFormatException e) {
-			System.err.println(PROGRAM_NAME + ": invalid number for property process.gid in configuration file");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": invalid number for property process.gid in configuration file"));
 			System.exit(EXIT_FAILURE);
 		}
 
@@ -1347,7 +1347,7 @@ public class Kernel {
 		try {
 			umask = Short.parseShort(properties.getProperty("process.umask", "002"), 8);
 		} catch (NumberFormatException e) {
-			System.err.println(PROGRAM_NAME + ": invalid number for property process.umask in configuration file");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": invalid number for property process.umask in configuration file"));
 			System.exit(EXIT_FAILURE);
 		}
 
@@ -1357,16 +1357,16 @@ public class Kernel {
 		try {
 			MAX_OPEN_FILES = Integer.parseInt(properties.getProperty("kernel.max_open_files", "20"));
 		} catch (NumberFormatException e) {
-			System.err.println(
-					PROGRAM_NAME + ": invalid number for property kernel.max_open_files in configuration file");
+			System.out.println(
+				ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": invalid number for property kernel.max_open_files in configuration file"));
 			System.exit(EXIT_FAILURE);
 		}
 
 		try {
 			ProcessContext.MAX_OPEN_FILES = Integer.parseInt(properties.getProperty("process.max_open_files", "10"));
 		} catch (NumberFormatException e) {
-			System.err.println(
-					PROGRAM_NAME + ": invalid number for property process.max_open_files in configuration file");
+			System.out.println(
+				ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": invalid number for property process.max_open_files in configuration file"));
 			System.exit(EXIT_FAILURE);
 		}
 
@@ -1381,7 +1381,7 @@ public class Kernel {
 		try {
 			openFileSystems[ROOT_FILE_SYSTEM] = new FileSystem(rootFileSystemFilename, rootFileSystemMode);
 		} catch (IOException e) {
-			System.err.println(PROGRAM_NAME + ": unable to open root file system");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open root file system"));
 			System.exit(EXIT_FAILURE);
 		}
 

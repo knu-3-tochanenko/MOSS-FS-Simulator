@@ -68,7 +68,10 @@ public class cp {
 
 		// make sure we got the correct number of parameters
 		if (argv.length != 2) {
-			System.err.println(PROGRAM_NAME + ": usage: java " + PROGRAM_NAME + " input-file output-file");
+			System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <input-file> <output-file>"));
+            System.out.println(ANSI.Blue("\t<input-file>") + " :\n\tPath to file where data should be copied");
+            System.out.println(ANSI.Blue("\t<output-file>") + " :\n\tPath to file where data should be pasted");
 			Kernel.exit(1);
 		}
 
@@ -80,7 +83,7 @@ public class cp {
 		int in_fd = Kernel.open(in_name, Kernel.O_RDONLY);
 		if (in_fd < 0) {
 			Kernel.perror(PROGRAM_NAME);
-			System.err.println(PROGRAM_NAME + ": unable to open input file \"" + in_name + "\"");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open input file \"") + ANSI.Yellow(in_name) + ANSI.Red("\""));
 			Kernel.exit(2);
 		}
 
@@ -88,7 +91,7 @@ public class cp {
 		int out_fd = Kernel.creat(out_name, OUTPUT_MODE);
 		if (out_fd < 0) {
 			Kernel.perror(PROGRAM_NAME);
-			System.err.println(PROGRAM_NAME + ": unable to open output file \"" + argv[1] + "\"");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": unable to open output file \"") + ANSI.Yellow(argv[1]) + ANSI.Red("\""));
 			Kernel.exit(3);
 		}
 
@@ -109,7 +112,7 @@ public class cp {
 			// if error or nothing written, give message and exit
 			if (wr_count <= 0) {
 				Kernel.perror(PROGRAM_NAME);
-				System.err.println(PROGRAM_NAME + ": error during write to output file");
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error during write to output file"));
 				Kernel.exit(4);
 			}
 		}
@@ -123,7 +126,7 @@ public class cp {
 			Kernel.exit(0);
 		else {
 			Kernel.perror(PROGRAM_NAME);
-			System.err.println(PROGRAM_NAME + ": error during read from input file");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": error during read from input file"));
 			Kernel.exit(5);
 		}
 	}

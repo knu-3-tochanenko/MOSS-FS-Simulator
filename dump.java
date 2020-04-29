@@ -45,6 +45,8 @@ import java.lang.Integer;
  */
 public class dump {
 
+	private static final String PROGRAM_NAME = "dump";
+
 	public static void main(String[] args) {
 		for (int i = 0; i < args.length; i++) {
 			// open a file
@@ -63,9 +65,9 @@ public class dump {
 				}
 				in.close();
 			} catch (FileNotFoundException e) {
-				System.out.println("error: unable to open input file " + args[i]);
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("error: unable to open input file " + args[i]));
 			} catch (IOException e) {
-				System.out.println("error: unable to read from file " + args[i]);
+				System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("error: unable to read from file " + args[i]));
 			}
 		}
 	}

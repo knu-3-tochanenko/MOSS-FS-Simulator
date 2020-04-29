@@ -39,6 +39,14 @@ public class ls {
 	public static void main(String[] args) throws Exception {
 		// initialize the file system simulator kernel
 		Kernel.initialize();
+        // if no paths to link
+
+		if (args.length != 1) {
+            System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+            System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <path>"));
+            System.out.println(ANSI.Blue("\t<path>") + " :\n\tPath to file or directory\n\tDisplays all the information about it's files and direcotries");
+            Kernel.exit(1);
+        }
 
 		// for each path-name given
 		for (int i = 0; i < args.length; i++) {
@@ -104,7 +112,7 @@ public class ls {
 				// check to see if our last read failed
 				if (status < 0) {
 					Kernel.perror("main");
-					System.err.println("main: unable to read directory entry from /");
+					System.err.println(ANSI.Red("main: unable to read directory entry from /"));
 					Kernel.exit(2);
 				}
 
@@ -112,7 +120,7 @@ public class ls {
 				Kernel.close(fd);
 
 				// print a footing for this directory
-				System.out.println("total files: " + count);
+				System.out.println(ANSI.Blue("total files: ") + count);
 			}
 		}
 

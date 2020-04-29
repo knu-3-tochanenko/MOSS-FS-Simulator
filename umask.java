@@ -6,7 +6,9 @@ public class umask {
     public static final String PROGRAM_NAME = "umask";
 
     private static void showUsage() throws Exception {
-        System.err.println(PROGRAM_NAME + ": usage: java " + PROGRAM_NAME + " <octal number from 000 to 777>");
+        System.out.println(ANSI.Red("Wrong \"")+ ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+        System.out.println(ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <mask>"));
+        System.out.println(ANSI.Blue("\t<mask>") + " :\n\tNew mask in [000, 777]");
         Kernel.exit(1);
     }
 

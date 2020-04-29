@@ -52,6 +52,7 @@ import java.io.*;
  * @author Ray Ontko
  */
 public class mkfs {
+	public static final String PROGRAM_NAME = "mkfs";
 
 	/**
 	 * Creates a "file system" in the named file with the specified blocksize and
@@ -60,8 +61,14 @@ public class mkfs {
 	 * @exception java.lang.Exception if any exception occurs
 	 */
 	public static void main(String[] argv) throws Exception {
+
 		if (argv.length != 3) {
-			System.err.println("mkfs: usage: java mkfs <filename> <block-size> <blocks>");
+			System.out.println(ANSI.Red("Wrong \"") + ANSI.Yellow(PROGRAM_NAME) + ANSI.Red("\" command signature!"));
+			System.out.println(
+					ANSI.Red("Usage: ") + "java " + ANSI.Yellow(PROGRAM_NAME) + ANSI.Blue(" <filename> <block-size> <blocks>"));
+			System.out.println(ANSI.Blue("\t<filename>") + " :\n\tKernel file of File System");
+			System.out.println(ANSI.Blue("\t<block-size>") + " :\n\tSize of single block");
+			System.out.println(ANSI.Blue("\t<blocks>") + " :\n\tTotal number of blocks");
 			System.exit(1);
 		}
 
@@ -142,17 +149,17 @@ public class mkfs {
 		block_total = super_blocks + free_list_blocks + inode_blocks + data_blocks;
 
 		if (data_blocks <= 0) {
-			System.err.println("mkfs: parameters resulted in data block count less than one");
+			System.out.println(ANSI.Yellow(PROGRAM_NAME) + ANSI.Red(": parameters resulted in data block count less than one"));
 			System.exit(2);
 		}
 
-		System.out.println("block_size: " + block_size);
-		System.out.println("blocks: " + blocks);
-		System.out.println("super_blocks: " + super_blocks);
-		System.out.println("free_list_blocks: " + free_list_blocks);
-		System.out.println("inode_blocks: " + inode_blocks);
-		System.out.println("data_blocks: " + data_blocks);
-		System.out.println("block_total: " + block_total);
+		System.out.println(ANSI.Blue("block_size: ") + block_size);
+		System.out.println(ANSI.Blue("blocks: ") + blocks);
+		System.out.println(ANSI.Blue("super_blocks: ") + super_blocks);
+		System.out.println(ANSI.Blue("free_list_blocks: ") + free_list_blocks);
+		System.out.println(ANSI.Blue("inode_blocks: ") + inode_blocks);
+		System.out.println(ANSI.Blue("data_blocks: ") + data_blocks);
+		System.out.println(ANSI.Blue("block_total: ") + block_total);
 
 		// If the file already exists, we delete it.
 		// Under jdk 1.2 we can use setLength() to truncate, but
